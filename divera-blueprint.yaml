@@ -47,7 +47,6 @@ trigger:
     attribute: id
     not_to:
       - unknown
-
 condition:
   condition: and
   conditions:
@@ -66,6 +65,10 @@ condition:
           entity_id: !input divera_sensor
           attribute: self_addressed
           state: true
+    - condition: state
+      entity_id: !input divera_sensor
+      attribute: closed
+      state: false
 action:
   - choose:
     default: !input target_action
