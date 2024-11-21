@@ -31,6 +31,8 @@ This integration is available in HACS (Home Assistant Community Store).
 9. Search for "Divera"
 10. Click the "Download" button
 
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=fwmarcel&repository=home-assistant-divera&category=Integration)
+
 ### Manual
 
 To install this integration manually you have to download [_divera.zip_](https://github.com/fwmarcel/home-assistant-divera/releases/latest/download/divera.zip) and extract its contents to `config/custom_components/divera` directory:
