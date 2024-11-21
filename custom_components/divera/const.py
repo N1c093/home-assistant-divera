@@ -13,7 +13,6 @@ DIVERA_GMBH: str = "Divera GmbH"
 ATTR_NAME: str = "state"
 ATTR_LATEST_UPDATE: str = "latest_update_utc"
 DIVERA_DATA: str = "divera_data"
-DATA_DIVERA_COORDINATOR: str = "divera_coordinator"
 USER_NAME: str = "user_name"
 
 DIVERA_BASE_URL: str = "https://app.divera247.com"

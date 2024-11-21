@@ -12,19 +12,22 @@ from .const import (
     CONF_FLOW_VERSION,
     DATA_ACCESSKEY,
     DATA_BASE_URL,
-    DATA_DIVERA_COORDINATOR,
     DATA_UCRS,
     DIVERA_BASE_URL,
     DOMAIN,
     LOGGER,
 )
 from .coordinator import DiveraCoordinator
+from .data import DiveraRuntimeData
 from .divera import DiveraClient, DiveraError
 
 PLATFORMS = [Platform.SELECT, Platform.SENSOR]
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
+type DiveraConfigEntry = ConfigEntry[DiveraRuntimeData]
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: DiveraConfigEntry):
     """Set up Divera as config entry.
 
     Args:
@@ -41,17 +44,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     websession = async_get_clientsession(hass)
     tasks = []
+    coordinators = {}
+
     for ucr_id in ucr_ids:
         divera_coordinator = DiveraCoordinator(
             hass, websession, accesskey, base_url=base_url, ucr_id=ucr_id
         )
-        divera_hass_data[entry.entry_id][ucr_id] = {
-            DATA_DIVERA_COORDINATOR: divera_coordinator
-        }
-
+        coordinators[ucr_id] = divera_coordinator
         tasks.append(
             asyncio.create_task(divera_coordinator.async_config_entry_first_refresh())
         )
+
+    entry.runtime_data = DiveraRuntimeData(coordinators)
 
     await asyncio.wait(tasks)
 

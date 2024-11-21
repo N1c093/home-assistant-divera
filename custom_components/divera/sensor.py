@@ -6,12 +6,11 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
 
-from .const import DATA_DIVERA_COORDINATOR, DATA_UCRS, DOMAIN
+from . import DiveraConfigEntry
 from .coordinator import DiveraCoordinator
 from .divera import DiveraClient
 from .entity import DiveraEntity, DiveraEntityDescription
@@ -45,7 +44,7 @@ SENSORS: tuple[DiveraSensorEntityDescription, ...] = (
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: DiveraConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Divera sensor entities.
@@ -56,17 +55,13 @@ async def async_setup_entry(
         async_add_entities (AddEntitiesCallback): Function to add entities.
 
     """
-    ucr_ids: list[int] = entry.data[DATA_UCRS]
 
-    entities: list[DiveraSensorEntity] = []
-
-    for ucr_id in ucr_ids:
-        coordinator = hass.data[DOMAIN][entry.entry_id][ucr_id][DATA_DIVERA_COORDINATOR]
-
-        entities.extend(
-            [DiveraSensorEntity(coordinator, description) for description in SENSORS],
-        )
-
+    coordinators = entry.runtime_data.coordinators
+    entities: list[DiveraSensorEntity] = [
+        DiveraSensorEntity(coordinators[ucr_id], description)
+        for ucr_id in coordinators
+        for description in SENSORS
+    ]
     async_add_entities(entities, False)
 
 
