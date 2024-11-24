@@ -60,6 +60,11 @@
       "user_status": {
         "name": "Benutzer Status"
       }
+    },
+    "calendar": {
+      "events": {
+        "name": "Termine"
+      }
     }
   }
 }

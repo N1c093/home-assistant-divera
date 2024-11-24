@@ -5,7 +5,9 @@ from http.client import UNAUTHORIZED
 
 from aiohttp import ClientError, ClientResponseError, ClientSession
 
+from homeassistant.components.calendar import CalendarEvent
 from homeassistant.const import STATE_UNKNOWN
+from homeassistant.util.dt import get_default_time_zone
 
 from .const import (
     DIVERA_API_PULL_PATH,
@@ -13,7 +15,6 @@ from .const import (
     DIVERA_BASE_URL,
     LOGGER,
     PARAM_ACCESSKEY,
-    PARAM_EVENT,
     PARAM_LOCALMONITOR,
     PARAM_MONITOR,
     PARAM_NEWS,
@@ -63,7 +64,6 @@ class DiveraClient:
         params = {
             PARAM_ACCESSKEY: self.__accesskey,
             PARAM_NEWS: time,
-            PARAM_EVENT: time,
             PARAM_STATUSPLAN: time,
             PARAM_LOCALMONITOR: time,
             PARAM_MONITOR: time,
@@ -208,6 +208,77 @@ class DiveraClient:
         data["timestamp"] = datetime.fromtimestamp(timestamp)
         data["id"] = self.__data["data"]["status"]["status_id"]
         return data
+
+    def get_last_event(self) -> CalendarEvent | None:
+        """Retrieve the last event from the Divera data.
+
+        This method fetches the last event based on the sorting order defined in the
+        Divera data. If there are no events, it returns None.
+
+        Returns:
+            CalendarEvent | None: The last event as a CalendarEvent object if available,
+            otherwise None.
+
+        """
+        sorting_list = self.__data["data"]["events"]["sorting"]
+        if sorting_list:
+            last_event_id = sorting_list[0]
+            event = self.__data["data"]["events"]["items"].get(str(last_event_id), {})
+            return self.__map_event_to_calendar(event)
+        return None
+
+    def __map_event_to_calendar(self, event) -> CalendarEvent:
+        """Map a raw event from Divera data to a CalendarEvent.
+
+        This private method converts a raw event dictionary from the Divera data
+        into a CalendarEvent object. It extracts the start and end times, title,
+        location, description, and unique identifier.
+
+        Args:
+            event (dict): A dictionary representing the raw event data from Divera.
+
+        Returns:
+            CalendarEvent: A CalendarEvent object populated with the event data.
+
+        """
+        timezone = get_default_time_zone()
+        start = datetime.fromtimestamp(event.get("start"), tz=timezone)
+        end = datetime.fromtimestamp(event.get("end"), tz=timezone)
+        return CalendarEvent(
+            start=start,
+            end=end,
+            summary=event.get("title"),
+            location=event.get("address"),
+            description=event.get("text"),
+            uid=event.get("id"),
+        )
+
+    def get_events(
+        self, start_date: datetime, end_date: datetime
+    ) -> list[CalendarEvent]:
+        """Retrieve all events within a specified date range.
+
+        This method fetches all events from the Divera data that fall within the
+        specified start and end dates. It uses the sorting order to iterate through
+        events and maps them to CalendarEvent objects.
+
+        Args:
+            start_date (datetime): The start date for filtering events.
+            end_date (datetime): The end date for filtering events.
+
+        Returns:
+            list[CalendarEvent]: A list of CalendarEvent objects that fall within
+            the specified date range.
+
+        """
+        sorting_list = self.__data["data"]["events"]["sorting"]
+        events = []
+        for event_id in sorting_list:
+            event = self.__data["data"]["events"]["items"].get(str(event_id), {})
+            cal_event = self.__map_event_to_calendar(event)
+            if cal_event.start >= start_date and cal_event.end <= end_date:
+                events.append(cal_event)
+        return events
 
     def get_last_alarm_attributes(self) -> dict:
         """Return additional information of the last alarm.
