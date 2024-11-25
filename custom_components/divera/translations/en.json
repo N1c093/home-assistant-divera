@@ -53,7 +53,12 @@
   "entity": {
     "sensor": {
       "alarm": {
-        "name": "Alarm"
+        "name": "last Alarm"
+      }
+    },
+    "binary_sensor": {
+      "active_alarm": {
+        "name": "active Alarm"
       }
     },
     "select": {

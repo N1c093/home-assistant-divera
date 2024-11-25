@@ -98,7 +98,6 @@ class DiveraCalendarEntity(DiveraEntity, CalendarEntity):
 
     def _divera_update(self) -> None:
         self._event = self.entity_description.event_fn(self.coordinator.data)
-        # self._attr_extra_state_attributes = self.entity_description.attribute_fn(self.coordinator.data)
 
     @property
     def event(self) -> CalendarEvent | None:
@@ -113,8 +112,6 @@ class DiveraCalendarEntity(DiveraEntity, CalendarEntity):
     async def async_get_events(
         self, hass: HomeAssistant, start_date: datetime, end_date: datetime
     ) -> list[CalendarEvent]:
-        """Get all events in a specific time frame."""
-        return self.coordinator.data.get_events(start_date, end_date)
         """Get all events in a specific time frame.
 
         Args:
@@ -124,4 +121,6 @@ class DiveraCalendarEntity(DiveraEntity, CalendarEntity):
 
         Returns:
             list[CalendarEvent]: A list of calendar events within the specified time frame.
+
         """
+        return self.coordinator.data.get_events(start_date, end_date)

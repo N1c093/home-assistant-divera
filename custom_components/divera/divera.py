@@ -127,7 +127,7 @@ class DiveraClient:
         data["email"] = self.get_email()
         return data
 
-    def get_state_id_by_name(self, name):
+    def get_state_id_by_name(self, name) -> str:
         """Return the state_id of the given state name.
 
         Args:
@@ -141,12 +141,13 @@ class DiveraClient:
             KeyError: If the required keys are not found in the data dictionary.
 
         """
-        for state_id in self.__data["data"]["cluster"]["statussorting"]:
-            state_name = self.__data["data"]["cluster"]["status"][str(state_id)]["name"]
-            if state_name == name:
+        status = self.__data["data"]["cluster"]["status"]
+        status_sorting = self.__data["data"]["cluster"]["statussorting"]
+
+        for state_id in status_sorting:
+            if status.get(str(state_id), {}).get("name") == name:
                 return state_id
-        # TODO: raise Error instead of None
-        return None
+        raise ValueError(f"State name '{name}' not found.")
 
     def get_all_state_name(self) -> list:
         """Return the list of all available names of the states.
@@ -205,7 +206,9 @@ class DiveraClient:
         """
         data = {}
         timestamp = self.__data["data"]["status"]["status_set_date"]
-        data["timestamp"] = datetime.fromtimestamp(timestamp)
+        data["timestamp"] = datetime.fromtimestamp(
+            timestamp, tz=get_default_time_zone()
+        )
         data["id"] = self.__data["data"]["status"]["status_id"]
         return data
 
@@ -227,7 +230,8 @@ class DiveraClient:
             return self.__map_event_to_calendar(event)
         return None
 
-    def __map_event_to_calendar(self, event) -> CalendarEvent:
+    @staticmethod
+    def __map_event_to_calendar(event) -> CalendarEvent:
         """Map a raw event from Divera data to a CalendarEvent.
 
         This private method converts a raw event dictionary from the Divera data
@@ -280,6 +284,22 @@ class DiveraClient:
                 events.append(cal_event)
         return events
 
+    def has_open_alarms(self) -> bool:
+        """Check if there are any open alarms.
+
+        This method iterates through the list of alarm IDs specified in the
+        sorting order and checks if any of the corresponding alarms are not closed.
+
+        Returns:
+            bool: True if there is at least one open alarm; False otherwise.
+
+        """
+        sorting_list = self.__data["data"]["alarm"]["sorting"]
+        items = self.__data["data"]["alarm"]["items"]
+        return any(
+            not items.get(str(alarm_id), {}).get("closed") for alarm_id in sorting_list
+        )
+
     def get_last_alarm_attributes(self) -> dict:
         """Return additional information of the last alarm.
 
@@ -309,7 +329,9 @@ class DiveraClient:
             "id": alarm.get("id"),
             "foreign_id": alarm.get("foreign_id"),
             "text": alarm.get("text"),
-            "date": datetime.fromtimestamp(alarm.get("date")),
+            "date": datetime.fromtimestamp(
+                alarm.get("date"), tz=get_default_time_zone()
+            ),
             "address": alarm.get("address"),
             "latitude": str(alarm.get("lat")),
             "longitude": str(alarm.get("lng")),
@@ -331,12 +353,11 @@ class DiveraClient:
             str: The state of the user who answered the alarm.
 
         """
+        ucr_id = str(self.get_active_ucr())
         answered = alarm.get("ucr_answered", {})
-        ucr_id = self.get_active_ucr()
 
-        for state_id in answered:
-            answer = answered.get(state_id)
-            if str(ucr_id) in answer:
+        for state_id, answer in answered.items():
+            if ucr_id in answer:
                 return self.get_state_name_by_id(state_id)
         return "not answered"
 
@@ -542,29 +563,33 @@ class DiveraClient:
         """
         return self.__data["data"]["user"]["email"]
 
-    async def set_user_state_by_id(self, state_id: int):
-        """Set the state of the user to the given id."""
+    async def set_user_state_by_id(self, state_id: str):
+        """Set the state of the user to the given id.
+
+        This method sends a POST request to the Divera API with the specified
+        access key and UCR to update the user's state.
+
+        Args:
+            state_id (str): The ID of the state to set the user to.
+
+        Raises:
+            DiveraAuthError: If authentication fails while connecting to the Divera API.
+            DiveraConnectionError: If an error occurs while connecting to the Divera API.
+
+        """
         state = {"Status": {"id": state_id}}
-
         params = {PARAM_ACCESSKEY: self.__accesskey, PARAM_UCR: self.__ucr_id}
-
-        url = "".join([self.__base_url, DIVERA_API_STATUS_PATH])
+        url = f"{self.__base_url}{DIVERA_API_STATUS_PATH}"
 
         try:
             async with self.__session.post(
                 url=url, params=params, json=state
             ) as response:
                 response.raise_for_status()
-        except ClientError as exc:
+        except (ClientError, ClientResponseError) as exc:
             url = remove_params_from_url(exc.request.url)
             LOGGER.error(f"An error occurred while requesting {url!r}.")
-            raise DiveraConnectionError from None
-        except ClientResponseError as exc:
-            url = remove_params_from_url(exc.request.url)
-            LOGGER.error(
-                f"Error response {exc.response.status_code} while requesting {url!r}."
-            )
-            if exc.response.status_code == UNAUTHORIZED:
+            if isinstance(exc, ClientResponseError) and exc.status == UNAUTHORIZED:
                 raise DiveraAuthError from None
             raise DiveraConnectionError from None
 

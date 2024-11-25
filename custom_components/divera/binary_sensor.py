@@ -5,7 +5,10 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
+from homeassistant.components.binary_sensor import (
+    BinarySensorEntity,
+    BinarySensorEntityDescription,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
@@ -17,7 +20,9 @@ from .entity import DiveraEntity, DiveraEntityDescription
 
 
 @dataclass(frozen=True, kw_only=True)
-class DiveraSensorEntityDescription(DiveraEntityDescription, SensorEntityDescription):
+class DiveraBinarySensorEntityDescription(
+    DiveraEntityDescription, BinarySensorEntityDescription
+):
     """Description of a Divera sensor entity.
 
     Inherits from both DiveraEntityDescription and SensorEntityDescription.
@@ -31,12 +36,12 @@ class DiveraSensorEntityDescription(DiveraEntityDescription, SensorEntityDescrip
     value_fn: Callable[[DiveraClient], StateType]
 
 
-SENSORS: tuple[DiveraSensorEntityDescription, ...] = (
-    DiveraSensorEntityDescription(
-        key="alarm",
-        translation_key="alarm",
-        icon="mdi:message-text",
-        value_fn=lambda divera: divera.get_last_alarm(),
+BINARY_SENSORS: tuple[DiveraBinarySensorEntityDescription, ...] = (
+    DiveraBinarySensorEntityDescription(
+        key="active_alarm",
+        translation_key="active_alarm",
+        icon="mdi:alarm-light",
+        value_fn=lambda divera: divera.has_open_alarms(),
         attribute_fn=lambda divera: divera.get_last_alarm_attributes(),
     ),
 )
@@ -57,15 +62,15 @@ async def async_setup_entry(
     """
 
     coordinators = entry.runtime_data.coordinators
-    entities: list[DiveraSensorEntity] = [
-        DiveraSensorEntity(coordinators[ucr_id], description)
+    entities: list[DiveraBinarySensorEntity] = [
+        DiveraBinarySensorEntity(coordinators[ucr_id], description)
         for ucr_id in coordinators
-        for description in SENSORS
+        for description in BINARY_SENSORS
     ]
     async_add_entities(entities, False)
 
 
-class DiveraSensorEntity(DiveraEntity, SensorEntity):
+class DiveraBinarySensorEntity(DiveraEntity, BinarySensorEntity):
     """Represents a Divera sensor entity.
 
     Inherits from both DiveraEntity and SensorEntity.
@@ -76,12 +81,12 @@ class DiveraSensorEntity(DiveraEntity, SensorEntity):
 
     """
 
-    entity_description: DiveraSensorEntityDescription
+    entity_description: DiveraBinarySensorEntityDescription
 
     def __init__(
         self,
         coordinator: DiveraCoordinator,
-        description: DiveraSensorEntityDescription,
+        description: DiveraBinarySensorEntityDescription,
     ) -> None:
         """Initialize DiveraSensorEntity.
 
@@ -93,9 +98,7 @@ class DiveraSensorEntity(DiveraEntity, SensorEntity):
         super().__init__(coordinator, description)
 
     def _divera_update(self) -> None:
-        self._attr_native_value = self.entity_description.value_fn(
-            self.coordinator.data
-        )
+        self._attr_is_on = self.entity_description.value_fn(self.coordinator.data)
         self._attr_extra_state_attributes = self.entity_description.attribute_fn(
             self.coordinator.data
         )

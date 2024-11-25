@@ -21,7 +21,12 @@ from .coordinator import DiveraCoordinator
 from .data import DiveraRuntimeData
 from .divera import DiveraClient, DiveraError
 
-PLATFORMS = [Platform.SELECT, Platform.SENSOR, Platform.CALENDAR]
+PLATFORMS = [
+    Platform.SELECT,
+    Platform.SENSOR,
+    Platform.CALENDAR,
+    Platform.BINARY_SENSOR,
+]
 
 
 type DiveraConfigEntry = ConfigEntry[DiveraRuntimeData]
