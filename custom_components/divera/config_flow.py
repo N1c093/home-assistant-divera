@@ -4,12 +4,7 @@ from typing import Any
 
 from voluptuous import Optional, Required, Schema
 
-from homeassistant.config_entries import (
-    HANDLERS,
-    ConfigEntry,
-    ConfigFlow,
-    ConfigFlowResult,
-)
+from homeassistant.config_entries import HANDLERS, ConfigEntry, ConfigFlow
 from homeassistant.data_entry_flow import FlowHandler
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import (
@@ -131,9 +126,7 @@ class DiveraConfigFlow(DiveraFlow, ConfigFlow):
             dict: The next step or form to present to the user.
 
         """
-        self._config_entry = self.hass.config_entries.async_get_entry(
-            self.context["entry_id"]
-        )
+        self._config_entry = self._get_reconfigure_entry()
 
         websession = async_get_clientsession(self.hass)
         accesskey = self._config_entry.data.get(DATA_ACCESSKEY)
@@ -145,7 +138,7 @@ class DiveraConfigFlow(DiveraFlow, ConfigFlow):
 
     async def async_step_reconfigure_confirm(
         self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    ):
         """Handle the reconfigure confirm step to reconfigure active clusters of a config entry.
 
         Args:
@@ -167,16 +160,15 @@ class DiveraConfigFlow(DiveraFlow, ConfigFlow):
         except DiveraConnectionError:
             errors["base"] = ERROR_CONNECTION
 
-        if user_input is not None:
-            if not errors:
-                selected_cluster_names = user_input[CONF_CLUSTERS]
-                ucr_ids = self._divera_client.get_ucr_ids(selected_cluster_names)
-                data = {**self._config_entry.data, DATA_UCRS: ucr_ids}
-                return self.async_update_reload_and_abort(
-                    self._config_entry,
-                    data=data,
-                    reason="reconfigure_successful",
-                )
+        if user_input is not None and not errors:
+            selected_cluster_names = user_input[CONF_CLUSTERS]
+            ucr_ids = self._divera_client.get_ucr_ids(selected_cluster_names)
+            data = {DATA_UCRS: ucr_ids}
+            return self.async_update_reload_and_abort(
+                self._config_entry,
+                data_updates=data,
+                reason="reconfigure_successful",
+            )
 
         cluster_names = self._divera_client.get_all_cluster_names()
         ucr_ids = self._config_entry.data.get(DATA_UCRS)
@@ -266,4 +258,5 @@ class DiveraConfigFlow(DiveraFlow, ConfigFlow):
         """
         uid = self._divera_client.get_email()
         await self.async_set_unique_id(uid)
+        # self._abort_if_unique_id_mismatch() todo sollte bei reconfiguration benutzt werden
         self._abort_if_unique_id_configured()
