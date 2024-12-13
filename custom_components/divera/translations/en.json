@@ -31,7 +31,8 @@
     "abort": {
       "already_configured": "This User is already configured.",
       "reconfigure_successful": "Reconfigure successfully.",
-      "only_one_unit": "This user only has one unit."
+      "only_one_unit": "This user only has one unit.",
+      "not_supported": "This access key is not supported. Please use the access key of a user."
     }
   },
   "options": {

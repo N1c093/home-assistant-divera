@@ -214,6 +214,12 @@ class DiveraConfigFlow(DiveraFlow, ConfigFlow):
 
             if not errors:
                 await self.check_unique_id()
+
+                # normal users only have group id 8
+                ucr_id = self._divera_client.get_default_ucr()
+                if self._divera_client.get_usergroup_id(ucr_id) != 8:
+                    return self.async_abort(reason="not_supported")
+
                 if self._divera_client.get_ucr_count() > 1:
                     return await self.async_step_user_cluster_relation()
                 ucr_id: int = self._divera_client.get_default_ucr()

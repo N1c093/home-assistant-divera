@@ -628,6 +628,21 @@ class DiveraClient:
         sid = self.get_state_id_by_name(option)
         await self.set_user_state_by_id(sid)
 
+    def get_usergroup_id(self, ucr_id):
+        """Retrieve the ID of the usergroup associated with the given User Cluster Relation (UCR) ID.
+
+        Args:
+            ucr_id (int): The ID of the User Cluster Relation (UCR) to retrieve the cluster ID for.
+
+        Returns:
+            int: The ID of the usergroup associated with the specified UCR ID.
+
+        Raises:
+            KeyError: If the required keys are not found in the data dictionary.
+
+        """
+        return self.__data["data"]["ucr"][str(ucr_id)]["usergroup_id"]
+
 
 class DiveraError(Exception):
     """Base class for Divera-related exceptions."""
