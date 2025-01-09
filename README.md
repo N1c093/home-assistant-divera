@@ -96,7 +96,9 @@ If you want to add a new feature, add a pull request first so we can discuss the
 ## Disclaimer
 
 This custom integration is not officially endorsed or supported by Divera 24/7.
-Use it at your own risk and ensure that you comply with all relevant terms of service and privacy policies.
+The use of the Home Assistant integration for accessing the services of Divera 24/7 is at your own risk. The developer of the integration assumes no liability for any damages that may arise from its use, including but not limited to security incidents or violations of legal regulations. Depending on the configuration, sensitive personal data may be retrieved and displayed through the integration. It is the user's responsibility to ensure that this data is adequately protected.
+
+Additionally, the user must ensure that the use of this integration complies with the requirements of the General Data Protection Regulation (GDPR). This includes, among other things, ensuring a lawful basis for processing personal data, implementing appropriate technical and organizational measures to protect the data, and preventing unauthorized access. The user is also responsible for securing their Home Assistant instance, for example, by using secure passwords, encryption, and regular updates.
 
 ## Star History
 
