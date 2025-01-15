@@ -79,6 +79,8 @@ If a more frequent update is required, this must be implemented using the `homea
 This integration provides entities for the following information from Divera 24/7:
 
 - the last visible alarm.
+- the last news
+- calendar entries
 - the current status of the user.
 
 ## Automation Blueprint
