@@ -55,6 +55,9 @@
     "sensor": {
       "alarm": {
         "name": "last Alarm"
+      },
+      "news": {
+        "name": "last News"
       }
     },
     "binary_sensor": {

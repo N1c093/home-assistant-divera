@@ -35,9 +35,16 @@ SENSORS: tuple[DiveraSensorEntityDescription, ...] = (
     DiveraSensorEntityDescription(
         key="alarm",
         translation_key="alarm",
-        icon="mdi:message-text",
+        icon="mdi:message-alert",
         value_fn=lambda divera: divera.get_last_alarm(),
         attribute_fn=lambda divera: divera.get_last_alarm_attributes(),
+    ),
+    DiveraSensorEntityDescription(
+        key="news",
+        translation_key="news",
+        icon="mdi:message-text",
+        value_fn=lambda divera: divera.get_last_news(),
+        attribute_fn=lambda divera: divera.get_last_news_attributes(),
     ),
 )
 

@@ -54,7 +54,10 @@
   "entity": {
     "sensor": {
       "alarm": {
-        "name": "Letzter Alarm"
+        "name": "letzter Alarm"
+      },
+      "news": {
+        "name": "letzte News"
       }
     },
     "binary_sensor": {

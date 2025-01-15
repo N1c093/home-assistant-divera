@@ -17,7 +17,6 @@ from .const import (
     PARAM_ACCESSKEY,
     PARAM_LOCALMONITOR,
     PARAM_MONITOR,
-    PARAM_NEWS,
     PARAM_STATUSPLAN,
     PARAM_UCR,
     VERSION_ALARM,
@@ -63,7 +62,6 @@ class DiveraClient:
         time = int(datetime.now().timestamp())
         params = {
             PARAM_ACCESSKEY: self.__accesskey,
-            PARAM_NEWS: time,
             PARAM_STATUSPLAN: time,
             PARAM_LOCALMONITOR: time,
             PARAM_MONITOR: time,
@@ -377,6 +375,62 @@ class DiveraClient:
             alarm = self.__data["data"]["alarm"]["items"].get(str(last_alarm_id), {})
             return alarm.get("title", STATE_UNKNOWN)
         return STATE_UNKNOWN
+
+    def get_last_news(self) -> dict:
+        """Return information of the last news.
+
+        Returns:
+            str: The title of the last news, or 'unknown' if no news exists.
+
+        Raises:
+            KeyError: If the required keys are not found in the data dictionary.
+
+        """
+        sorting_list = self.__data["data"]["news"]["sorting"]
+        if sorting_list:
+            last_news_id = sorting_list[0]
+            news = self.__data["data"]["news"]["items"].get(str(last_news_id), {})
+            return news.get("title", STATE_UNKNOWN)
+        return STATE_UNKNOWN
+
+    def get_last_news_attributes(self) -> dict:
+        """Return additional information of the last news.
+
+        This method retrieves the attributes of the most recent news item, including
+        its ID, text, date, address, location coordinates, groups involved, new status,
+        and self-addressed status.
+
+        Returns:
+            dict: A dictionary containing information about the last news item.
+
+        Raises:
+            KeyError: If the required keys are not found in the data dictionary.
+
+        """
+        sorting_list = self.__data["data"]["news"]["sorting"]
+        if not sorting_list:
+            return {}
+
+        last_news_id = sorting_list[0]
+        news = self.__data["data"]["news"]["items"].get(str(last_news_id), {})
+
+        groups = [
+            self.get_group_name_by_id(group_id) for group_id in news.get("group", [])
+        ]
+
+        return {
+            "id": news.get("id"),
+            "text": news.get("text"),
+            "date": datetime.fromtimestamp(
+                news.get("date"), tz=get_default_time_zone()
+            ),
+            "address": news.get("address"),
+            "latitude": str(news.get("lat")),
+            "longitude": str(news.get("lng")),
+            "groups": groups,
+            "new": news.get("new"),
+            "self_addressed": news.get("ucr_self_addressed"),
+        }
 
     def get_group_name_by_id(self, group_id):
         """Return the name from the given group id.
