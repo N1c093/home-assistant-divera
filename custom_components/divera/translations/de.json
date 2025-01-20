@@ -58,6 +58,9 @@
       },
       "news": {
         "name": "letzte News"
+      },
+      "vehicle": {
+        "name": "Fahrzeug Status {vehicle_name}"
       }
     },
     "binary_sensor": {

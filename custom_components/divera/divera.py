@@ -447,6 +447,48 @@ class DiveraClient:
             "new": news.get("new"),
             "self_addressed": news.get("ucr_self_addressed"),
         }
+    
+    def get_all_vehicle_statuses(self) -> dict:
+        """Return the status of all vehicles.
+
+        Returns:
+            dict: A dictionary containing the status of all vehicles.
+
+        Raises:
+            KeyError: If the required keys are not found in the data dictionary.
+
+        """
+        try:
+            vehicles = self.__data['data']['cluster']['vehicle']
+            vehicle_statuses = {}
+            for vehicle_id, vehicle in vehicles.items():
+                vehicle_statuses[vehicle_id] = vehicle.get("fmsstatus_id", STATE_UNKNOWN)
+            return vehicle_statuses
+        except KeyError:
+            LOGGER.error("Vehicle data or key 'fmsstatus_id' not found.")
+            return {}
+        
+    def get_vehicle_status_attributes_by_id(self, vehicle_id: str) -> dict:
+        """Return additional information of the vehicle status by vehicle ID."""
+        try:
+            vehicle_status = self.__data['data']['cluster']['vehicle'][vehicle_id]
+            return {
+                'fullname': vehicle_status.get("fullname"),
+                'shortname': vehicle_status.get("shortname"),
+                'name': vehicle_status.get("name"),
+                'fmsstatus_note': vehicle_status.get("fmsstatus_note"),
+                'fmsstatus_ts': vehicle_status.get("fmsstatus_ts"),
+                'fmsstatus': vehicle_status.get("fmsstatus"),
+                'crew': vehicle_status.get("crew"),
+                'latitude': vehicle_status.get("lat"),
+                'longitude': vehicle_status.get("lng"),
+                'opta': vehicle_status.get("opta"),
+                'issi': vehicle_status.get("issi"),
+                'number': vehicle_status.get("number"),
+            }
+        except KeyError:
+            LOGGER.error(f"Vehicle with ID {vehicle_id} or one of the required keys not found.")
+            return {}
 
     def get_group_name_by_id(self, group_id):
         """Return the name from the given group id.
