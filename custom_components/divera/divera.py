@@ -319,9 +319,25 @@ class DiveraClient:
         last_alarm_id = sorting_list[0]
         alarm = self.__data["data"]["alarm"]["items"].get(str(last_alarm_id), {})
 
-        groups = [
-            self.get_group_name_by_id(group_id) for group_id in alarm.get("group", [])
-        ]
+        cross_unit_meta = alarm.get("cross_unit_meta", {})
+        cross_unit_groups = cross_unit_meta.get("groups", [])
+        cross_unit_clusters = cross_unit_meta.get("clusters", [])
+
+        groups = []
+
+        for group_id in alarm.get("group", []):
+            group_name = self.get_group_name_by_id(group_id)
+            if group_name is not None:
+                groups.append(group_name)
+            else:
+                cug = cross_unit_groups.get(str(group_id))
+                if cug:
+                    cluster_id = cug.get("cluster_id")
+                    cluster_name = cross_unit_clusters.get(str(cluster_id), {}).get(
+                        "name", ""
+                    )
+                    name = f"{cug.get('name', '')} ({cluster_name})"
+                    groups.append(name)
 
         return {
             "id": alarm.get("id"),
