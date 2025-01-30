@@ -447,45 +447,75 @@ class DiveraClient:
             "new": news.get("new"),
             "self_addressed": news.get("ucr_self_addressed"),
         }
-    
-    def get_all_vehicle_statuses(self) -> dict:
-        """Return the status of all vehicles.
+
+    def get_vehicle_id_list(self):
+        """Retrieve the IDs of all vehicles.
 
         Returns:
-            dict: A dictionary containing the status of all vehicles.
+            list[int]: A list containing all the vehicle IDs.
+
+        """
+        return list(self.__data["data"]["cluster"]["vehicle"].keys())
+
+    def get_vehicle_state(self, vehicle_id: str) -> dict:
+        """Retrieve the state of a vehicle by its ID.
+
+        Args:
+            vehicle_id (str): The ID of the vehicle.
+
+        Returns:
+            dict: The state of the vehicle, or an empty dictionary if the vehicle or key 'fmsstatus_id' is not found.
+
+        Raises:
+            KeyError: If the vehicle ID or key 'fmsstatus_id' is not found in the data dictionary.
+
+        """
+        try:
+            vehicle = self.__data["data"]["cluster"]["vehicle"][vehicle_id]
+            return vehicle.get("fmsstatus_id", STATE_UNKNOWN)
+        except KeyError:
+            LOGGER.error(
+                f"Vehicle with ID {vehicle_id} or key 'fmsstatus_id' not found."
+            )
+            return {}
+
+    def get_vehicle_attributes(self, vehicle_id: str) -> dict:
+        """Retrieve the status attributes of a vehicle by its ID.
+
+        Args:
+            vehicle_id (str): The ID of the vehicle.
+
+        Returns:
+            dict: A dictionary containing the status attributes of the vehicle, including
+                  fullname, shortname, name, fmsstatus_note, fmsstatus_ts, latitude, longitude,
+                  opta, issi, and number. If the vehicle or required keys are not found, an
+                  empty dictionary is returned.
 
         Raises:
             KeyError: If the required keys are not found in the data dictionary.
 
         """
         try:
-            vehicles = self.__data['data']['cluster']['vehicle']
-            vehicle_statuses = {}
-            for vehicle_id, vehicle in vehicles.items():
-                vehicle_statuses[vehicle_id] = vehicle.get("fmsstatus_id", STATE_UNKNOWN)
-            return vehicle_statuses
-        except KeyError:
-            LOGGER.error("Vehicle data or key 'fmsstatus_id' not found.")
-            return {}
-        
-    def get_vehicle_status_attributes_by_id(self, vehicle_id: str) -> dict:
-        """Return additional information of the vehicle status by vehicle ID."""
-        try:
-            vehicle_status = self.__data['data']['cluster']['vehicle'][vehicle_id]
+            vehicle_status = self.__data["data"]["cluster"]["vehicle"][vehicle_id]
+            fmsstatus_timestamp = datetime.fromtimestamp(
+                vehicle_status.get("fmsstatus_ts"), tz=get_default_time_zone()
+            )
             return {
-                'fullname': vehicle_status.get("fullname"),
-                'shortname': vehicle_status.get("shortname"),
-                'name': vehicle_status.get("name"),
-                'fmsstatus_note': vehicle_status.get("fmsstatus_note"),
-                'fmsstatus_ts': vehicle_status.get("fmsstatus_ts"),
-                'latitude': vehicle_status.get("lat"),
-                'longitude': vehicle_status.get("lng"),
-                'opta': vehicle_status.get("opta"),
-                'issi': vehicle_status.get("issi"),
-                'number': vehicle_status.get("number"),
+                "fullname": vehicle_status.get("fullname"),
+                "shortname": vehicle_status.get("shortname"),
+                "name": vehicle_status.get("name"),
+                "fmsstatus_note": vehicle_status.get("fmsstatus_note"),
+                "fmsstatus_ts": fmsstatus_timestamp,
+                "latitude": vehicle_status.get("lat"),
+                "longitude": vehicle_status.get("lng"),
+                "opta": vehicle_status.get("opta"),
+                "issi": vehicle_status.get("issi"),
+                "number": vehicle_status.get("number"),
             }
         except KeyError:
-            LOGGER.error(f"Vehicle with ID {vehicle_id} or one of the required keys not found.")
+            LOGGER.error(
+                f"Vehicle with ID {vehicle_id} or one of the required keys not found."
+            )
             return {}
 
     def get_group_name_by_id(self, group_id):

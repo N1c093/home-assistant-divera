@@ -6,7 +6,6 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
-from homeassistant.const import STATE_UNKNOWN
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
@@ -46,7 +45,7 @@ SENSORS: tuple[DiveraSensorEntityDescription, ...] = (
         icon="mdi:message-text",
         value_fn=lambda divera: divera.get_last_news(),
         attribute_fn=lambda divera: divera.get_last_news_attributes(),
-    )
+    ),
 )
 
 
@@ -65,24 +64,23 @@ async def async_setup_entry(
     """
 
     coordinators = entry.runtime_data.coordinators
+
     entities: list[DiveraSensorEntity] = [
         DiveraSensorEntity(coordinators[ucr_id], description)
         for ucr_id in coordinators
         for description in SENSORS
     ]
 
+    # TODO Vehicles
+    for ucr_id in coordinators:
+        divera_client = coordinators[ucr_id]
+        vehicle_id_list = divera_client.data.get_vehicle_id_list()
+        for vehicle_id in vehicle_id_list:
+            vehicle_attributes = divera_client.data.get_vehicle_attributes(vehicle_id)
+            vehicle_name = vehicle_attributes.get("name", f"Vehicle {vehicle_id}")
 
-
-    # Add vehicle sensors dynamically
-    divera_client = coordinators[next(iter(coordinators))].data
-    vehicle_statuses = divera_client.get_all_vehicle_statuses()
-    for vehicle_id, vehicle_status in vehicle_statuses.items():
-        vehicle_attributes = divera_client.get_vehicle_status_attributes_by_id(vehicle_id)
-        vehicle_name = vehicle_attributes.get("name", f"Vehicle {vehicle_id}")
-
-        entities.append(
-            DiveraSensorEntity(
-                coordinators[next(iter(coordinators))],
+            vehicle_entity = DiveraSensorEntity(
+                coordinators[ucr_id],
                 DiveraSensorEntityDescription(
                     key=vehicle_id,
                     translation_key="vehicle",
@@ -90,11 +88,15 @@ async def async_setup_entry(
                         "vehicle_name": vehicle_name,
                     },
                     icon="mdi:fire-truck",
-                    value_fn=lambda divera, vid=vehicle_id: divera.get_all_vehicle_statuses().get(vid, STATE_UNKNOWN),
-                    attribute_fn=lambda divera, vid=vehicle_id: divera.get_vehicle_status_attributes_by_id(vid),
+                    value_fn=lambda divera, vid=vehicle_id: divera.get_vehicle_state(
+                        vehicle_id  # noqa: B023
+                    ),
+                    attribute_fn=lambda divera,
+                    vid=vehicle_id: divera.get_vehicle_attributes(vehicle_id),  # noqa: B023
                 ),
             )
-        )
+            entities.append(vehicle_entity)
+
     async_add_entities(entities, False)
 
 
