@@ -462,7 +462,6 @@ class DiveraClient:
                 'name': vehicle_status.get("name"),
                 'fmsstatus_note': vehicle_status.get("fmsstatus_note"),
                 'fmsstatus_ts': vehicle_status.get("fmsstatus_ts"),
-                'crew': vehicle_status.get("crew"),
                 'latitude': vehicle_status.get("lat"),
                 'longitude': vehicle_status.get("lng"),
                 'opta': vehicle_status.get("opta"),
