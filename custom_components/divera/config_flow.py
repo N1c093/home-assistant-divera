@@ -31,7 +31,6 @@ from .const import (
     DOMAIN,
     ERROR_AUTH,
     ERROR_CONNECTION,
-    LOGGER,
 )
 from .divera import DiveraAuthError, DiveraClient, DiveraConnectionError
 
@@ -216,11 +215,7 @@ class DiveraConfigFlow(DiveraFlow, ConfigFlow):
             if not errors:
                 await self.check_unique_id()
 
-                # normal users only have group id 8
-                ucr_id = self._divera_client.get_default_ucr()
-                usergroup_id = self._divera_client.get_usergroup_id(ucr_id)
-                if usergroup_id != 8:
-                    LOGGER.warning("Usergroup ID %s is not supported", usergroup_id)
+                if not self._divera_client.check_usergroup_id():
                     return self.async_abort(reason="not_supported")
 
                 if self._divera_client.get_ucr_count() > 1:

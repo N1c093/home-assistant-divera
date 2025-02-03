@@ -768,20 +768,25 @@ class DiveraClient:
         sid = self.get_state_id_by_name(option)
         await self.set_user_state_by_id(sid)
 
-    def get_usergroup_id(self, ucr_id):
-        """Retrieve the ID of the usergroup associated with the given User Cluster Relation (UCR) ID.
+    def check_usergroup_id(self):
+        """Check if the user's group ID is allowed.
 
-        Args:
-            ucr_id (int): The ID of the User Cluster Relation (UCR) to retrieve the cluster ID for.
+        This method retrieves the user's group ID from the stored data and verifies whether it belongs
+        to the set of allowed group IDs (4 or 8). If the ID is valid, it returns True. Otherwise, it logs
+        a warning and returns False.
 
         Returns:
-            int: The ID of the usergroup associated with the specified UCR ID.
-
-        Raises:
-            KeyError: If the required keys are not found in the data dictionary.
+            bool: True if the user belongs to an allowed group (ID 4 or 8), False otherwise.
 
         """
-        return self.__data["data"]["ucr"][str(ucr_id)]["usergroup_id"]
+        # normal users only have group id 8 or 4
+        ucr_id = self._divera_client.get_default_ucr()
+        usergroup_id = self.__data["data"]["ucr"][str(ucr_id)]["usergroup_id"]
+        if usergroup_id in {8, 4}:
+            return True
+
+        LOGGER.warning("Unsupported Usergroup ID: %s", usergroup_id)
+        return False
 
 
 class DiveraError(Exception):
