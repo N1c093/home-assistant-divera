@@ -780,7 +780,7 @@ class DiveraClient:
 
         """
         # normal users only have group id 8 or 4
-        ucr_id = self._divera_client.get_default_ucr()
+        ucr_id = self.get_default_ucr()
         usergroup_id = self.__data["data"]["ucr"][str(ucr_id)]["usergroup_id"]
         if usergroup_id in {8, 4}:
             return True
